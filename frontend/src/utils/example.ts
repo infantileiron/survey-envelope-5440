@@ -1,0 +1,1 @@
+export function example(){return {name:'新足迹测组·米制矩形',source:'lantu_new_local_points.json',coordinate_system:'local_m',groups:[{group_id:'RECT',name:'4×2米矩形',points:[{point_id:'P1',x:1000000,y:1000000},{point_id:'P2',x:1000004,y:1000000},{point_id:'P3',x:1000004,y:1000002},{point_id:'P4',x:1000000,y:1000002},{point_id:'P5',x:1000002,y:1000001}]}]}}

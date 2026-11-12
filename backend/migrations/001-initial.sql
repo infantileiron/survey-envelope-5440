@@ -1,0 +1,4 @@
+-- Initial schema source: src/models; metadata.create_all creates missing tables.
+-- Scientific point arrays, group IDs, snapshots and results are LONGTEXT via config/json_type.py PreciseJSON.
+-- Python JSON encoding preserves binary64 round-trip digits; native MySQL JSON numeric normalization is avoided.
+-- area_tie_relative is a real DOUBLE column; individual x/y/area have no separate native numeric columns.

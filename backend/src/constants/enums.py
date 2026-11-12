@@ -1,0 +1,6 @@
+ROLES=('admin','analyst','viewer')
+DEDUPLICATIONS=('exact','reject')
+COORDINATE_SYSTEMS=('local_m',)
+RUN_STATUSES=('queued','running','completed','failed')
+REVIEW_DECISIONS=('accepted','needs_changes')
+GEOMETRY_TYPES=('point','line','polygon')
