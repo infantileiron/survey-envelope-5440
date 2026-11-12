@@ -1,7 +1,7 @@
-from fastapi import APIRouter,Depends,HTTPException,Response
+from fastapi import APIRouter,Depends,HTTPException
 from sqlalchemy import select
 from src.config.database import db_session
-from src.controllers.auth import current_user,writer,admin
+from src.controllers.auth import current_user,writer
 from src.models import EnvelopeRun
 from src.schemas.run import RunInput
 from src.services import runs as service
@@ -11,6 +11,9 @@ router=APIRouter(prefix='/runs')
 def listing(db=Depends(db_session),user=Depends(current_user)):return rows(db.scalars(select(EnvelopeRun).order_by(EnvelopeRun.created_at.desc())))
 @router.post('')
 def create(payload:RunInput,db=Depends(db_session),user=Depends(writer)):return service.create(db,payload.study_id)
+
+@router.post('/{id}/retry')
+def retry(id:str,db=Depends(db_session),user=Depends(writer)):return service.retry(db,id)
 
 @router.get('/{id}')
 def detail(id:str,db=Depends(db_session),user=Depends(current_user)):

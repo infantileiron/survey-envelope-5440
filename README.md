@@ -10,7 +10,7 @@
 2. 09:05 分别检查G01斜长带、G02 L形、G03重复点、G04共线、G05单位置原始记录。
 3. 09:10 选择精确坐标去重或拒绝重复，锁定同面积方向规则与算法版本。
 4. 09:15 选择需要计算的组，冻结完整来源、口径和组选择；未选组也保留在快照。
-5. 09:20 提交Redis worker，计算Andrew凸包与逐凸包边方向的最小面积包围框。
+5. 09:20 提交Redis worker，计算Andrew凸包与逐凸包边方向的最小面积包围框。同一研究的并发提交合并为同一次计算：每个研究至多一条运行（`envelope_runs.study_id` 唯一），在途重复请求返回同一任务，失败走重试接口并保留失败原因，已成功结果与复核归档不被重算或覆盖；worker重启把未完成运行重新入队。选组或口径不同的研究是不同实体，各自独立计算。
 6. 09:25 在同一x/y比例米制图中切换三种边界，核对原始/唯一/重复计数、面积、顶点和包含性。
 7. 09:30 说明凸包填平凹口和退化几何，不把包络当覆盖，提交接受或待补充复核版本。
 8. 09:40 负责人批准最新接受版本，CSV保存凸包顶点、轴框/定向框角点、单位、面积和来源计数。
@@ -52,6 +52,10 @@ API必须声明local_m，每组1至300条、最多8组，组ID唯一、组内点
 六实体 PointSurvey、BoundaryPolicy、EnvelopeStudy、EnvelopeRun、FootprintReview、Report，贯穿表/model/schema/service/route、前端API/store/page。研究快照冻结完整原始测组、去重口径、方向参数、算法版本与选组范围；运行和复核新增版本记录，报告绑定最新接受复核ID，后续复核不改旧CSV。
 
 科学坐标、group_ids、快照和结果使用 **MySQL LONGTEXT保存JSON**，由 `backend/src/config/json_type.py::PreciseJSON` 调用Python json序列化/解析，保留Float64往返数字。没有将x/y/面积声称为不存在的独立原生Double列；真正的 `boundary_policies.area_tie_relative` 是DOUBLE列。原生MySQL JSON读回百万级小数时可能改动1ULP，因此最终版本明确使用文本JSON。显示8位坐标或2位面积不改变底层值；CSV JSON保留完整往返数字。
+
+### 运行合并、重试与恢复
+
+`envelope_runs.study_id` 带唯一约束，一个研究至多一条运行。`POST /runs` 先 `SELECT ... FOR UPDATE` 锁定研究行再判断，保证同一研究的并发请求串行：已有 queued/running 运行时直接返回同一任务（合并，不产生重复任务与重复队列消息）；completed 运行原样返回，不重算、不覆盖；failed 运行返回409并提示走 `POST /runs/{id}/retry`。重试把同一条运行重置为queued、`attempts` 加一，失败原因保留在 `error` 中直到重算成功才清空；completed 运行拒绝重试。worker对重复投递是幂等的：只处理 queued/running 状态，completed 运行（含其复核与归档）永不重算；启动时仅把 queued/running 运行重新入队实现中断恢复，终态保持不动。选组不同或口径不同会冻结为不同研究，运行各自独立。研究任务页直接展示该研究唯一运行的状态、尝试次数、失败原因与重试入口，结果页可按运行查看状态并在失败时重试。已存在数据的演进脚本见 `backend/migrations/002-merged-runs.sql`（先迁移历史复核引用再去重，幂等）。
 
 | 部分 | 技术 |
 |---|---|

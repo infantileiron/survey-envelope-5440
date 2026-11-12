@@ -28,7 +28,7 @@ def seed():
   db.flush()
   if not db.get(EnvelopeStudy,'demo-study'):db.add(EnvelopeStudy(id='demo-study',name='五组足迹·三种包络比较',survey_id='demo-survey',policy_id='demo-policy',group_ids=[g['group_id'] for g in groups],snapshot={'survey':serialize(db.get(PointSurvey,'demo-survey')),'policy':serialize(db.get(BoundaryPolicy,'demo-policy'))},created_at=now()));db.flush()
   if not db.get(EnvelopeRun,'demo-run'):
-   study=db.get(EnvelopeStudy,'demo-study');db.add(EnvelopeRun(id='demo-run',study_id='demo-study',status='completed',result=analyze(study.snapshot,study.group_ids),error='',created_at=now()));db.flush()
+   study=db.get(EnvelopeStudy,'demo-study');stamp=now();db.add(EnvelopeRun(id='demo-run',study_id='demo-study',status='completed',result=analyze(study.snapshot,study.group_ids),error='',attempts=1,created_at=stamp,updated_at=stamp));db.flush()
   if not db.get(FootprintReview,'demo-review'):db.add(FootprintReview(id='demo-review',run_id='demo-run',version=1,note='已核对local_m米制声明、原始点/精确去重计数与三种面积。凸包填凹口不代表真实覆盖，共线/单位置保留退化类型，不能伪造采集面。',decision='accepted',author='analyst@lantu.demo',created_at=now()));db.flush()
   if not db.get(Report,'demo-report'):db.add(Report(id='demo-report',run_id='demo-run',review_id='demo-review',title='岚图足迹·包络人工复核稿',published_by='admin@lantu.demo',created_at=now()))
   db.commit();return {m.__tablename__:db.scalar(select(func.count()).select_from(m)) for m in (User,PointSurvey,BoundaryPolicy,EnvelopeStudy,EnvelopeRun,FootprintReview,Report)}
